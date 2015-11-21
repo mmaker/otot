@@ -6,62 +6,49 @@ import (
 	"log"
 	"io"
 	"math/big"
-	"time"
 
 	"github.com/mmaker/otot/encodings"
 	"github.com/mmaker/otot/proto"
 )
 
 func StartSender(in io.Reader, out io.Writer, choices []string) {
+	w := bufio.NewWriter(out)
 	s := encodings.NetstringScanner(in)
 
 	mod, _ := rand.Prime(rand.Reader, proto.BITS)
 	g, _ := rand.Int(rand.Reader, mod)
-
 	a, _ := rand.Int(rand.Reader, mod)
 	A := big.NewInt(0)
 	A.Exp(g, a, mod)
 
-	w := bufio.NewWriter(out)
-	proto.Send(w,
-		encodings.MarshalBigInt(mod),
-		encodings.MarshalBigInt(g),
-		encodings.MarshalBigInt(A))
+	proto.SendBigInt(w, mod, g, A)
 
-	log.Println("Now waiting for receiver…")
-	time.Sleep(10 * time.Second)
-	proto.CheckScan(s)
-	B := big.NewInt(0)
-	B.SetBytes(s.Bytes())
+	B := proto.RecvBigInt(s)
 
-	tmp := big.NewInt(0)
-	k0 := proto.Hash(tmp.Exp(B, a, mod).Bytes())
-	tmp.ModInverse(A, mod)
-	tmp.Mul(tmp, B)
-	tmp.Exp(tmp, a, mod)
-	k1 := proto.Hash(tmp.Bytes())
+	nkey := big.NewInt(0)
+	nkey.Exp(B, a, mod)
+	k0 := proto.Hash(nkey.Bytes())
 
-	e0 := encodings.MarshalBytes(proto.Encrypt(k0, []byte(choices[0])))
-	e1 := encodings.MarshalBytes(proto.Encrypt(k1, []byte(choices[1])))
-	proto.Send(w, e0, e1)
+	nkey.ModInverse(A, mod)
+	nkey.Mul(nkey, B)
+	nkey.Exp(nkey, a, mod)
+	k1 := proto.Hash(nkey.Bytes())
+
+
+	e0 := proto.Encrypt(k0, []byte(choices[0]))
+	e1 := proto.Encrypt(k1, []byte(choices[1]))
+	proto.SendBytes(w, e0, e1)
 }
 
 
 func StartReceiver(in io.Reader, out io.Writer, choice int) (msg string) {
 	log.Println("Listening.")
 	s := encodings.NetstringScanner(in)
+	w := bufio.NewWriter(out)
 
-	proto.CheckScan(s)
-	mod := big.NewInt(0)
-	mod.SetBytes(s.Bytes())
-
-	proto.CheckScan(s)
-	g := big.NewInt(0)
-	g.SetBytes(s.Bytes())
-
-	proto.CheckScan(s)
-	A := big.NewInt(0)
-	A.SetBytes(s.Bytes())
+	mod := proto.RecvBigInt(s)
+	g := proto.RecvBigInt(s)
+	A := proto.RecvBigInt(s)
 
 	b, _ := rand.Int(rand.Reader, mod)
 	B := big.NewInt(0)
@@ -72,16 +59,14 @@ func StartReceiver(in io.Reader, out io.Writer, choice int) (msg string) {
 		B.Mul(B, A)
 		B.Mod(B, mod)
 	}
-	w := bufio.NewWriter(out)
-	proto.Send(w, encodings.MarshalBigInt(B))
+	proto.SendBigInt(w, B)
 
 	tmp := big.NewInt(0)
-	k := proto.Hash(tmp.Exp(A, b, mod).Bytes())
+	tmp.Exp(A, b, mod)
+	k := proto.Hash(tmp.Bytes())
 
-	proto.CheckScan(s)
-	e0 := s.Bytes()
-	proto.CheckScan(s)
-	e1 := s.Bytes()
+	e0 := proto.RecvBytes(s)
+	e1 := proto.RecvBytes(s)
 
 	var data []byte
 	if choice == 0 {

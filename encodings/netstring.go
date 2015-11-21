@@ -28,6 +28,14 @@ func MarshalBytes(s []byte) []byte {
 	return append(len, s...)
 }
 
+func UnmarshalBytes(data []byte) []byte {
+	off, total := isMarshal(data)
+	if off < 0 {
+		return nil
+	}
+	return data[off:total]
+}
+
 
 func split(data []byte, atEOF bool) (int, []byte, error) {
 	size, total := isMarshal(data)

@@ -65,6 +65,9 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	v.Set("count", "30")
 	v.Set("since_id", r.sinceId)
 	mentions, err := r.t.GetMentionsTimeline(v)
+	if err != nil {
+		return n, err
+	}
 
 	if len(mentions) > 0 {
 		r.attempts = 0
@@ -123,7 +126,11 @@ func (w *writer) Write(p []byte) (i int, err error) {
 
 func NewTwitterReader(api *anaconda.TwitterApi) io.Reader {
 	v := url.Values{}
-	self, _ := api.GetSelf(v)
+	self, err := api.GetSelf(v)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := reader{
 		t: api,
 		prefix: fmt.Sprintf(PREFIX, self.ScreenName),

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"time"
 
 	"github.com/mmaker/otot/encodings"
 	"github.com/mmaker/otot/proto"
@@ -20,42 +19,26 @@ func StartClient(in io.Reader, out io.Writer) *big.Int {
 	A.Exp(g, a, mod)
 
 	w := bufio.NewWriter(out)
-	proto.Send(w,
-		encodings.MarshalBigInt(mod),
-		encodings.MarshalBigInt(g),
-		encodings.MarshalBigInt(A))
-
-	time.Sleep(5 * time.Second)
 	s := encodings.NetstringScanner(in)
-	B := big.NewInt(0)
-	proto.CheckScan(s)
-	B.SetBytes(s.Bytes())
 
+	proto.SendBigInt(w, mod, g, A)
+	B := proto.RecvBigInt(s)
 	return 	B.Exp(B, a, mod)
 }
-
 
 func StartServer(in io.Reader, out io.Writer) *big.Int {
 	fmt.Println("Listening.")
 	s := encodings.NetstringScanner(in)
+	w := bufio.NewWriter(out)
 
-	proto.CheckScan(s)
-	mod := big.NewInt(0)
-	mod.SetBytes(s.Bytes())
-
-	proto.CheckScan(s)
-	g := big.NewInt(0)
-	g.SetBytes(s.Bytes())
-
-	proto.CheckScan(s)
-	A := big.NewInt(0)
-	A.SetBytes(s.Bytes())
+	mod := proto.RecvBigInt(s)
+	g := proto.RecvBigInt(s)
+	A := proto.RecvBigInt(s)
 
 	b, _ := rand.Int(rand.Reader, mod)
 	B := big.NewInt(0)
 	B.Exp(g, b, mod)
-	w := bufio.NewWriter(out)
-	proto.Send(w, encodings.MarshalBigInt(B))
+	proto.SendBigInt(w, B)
 
 	return A.Exp(A, b, mod)
 }

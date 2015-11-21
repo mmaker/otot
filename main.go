@@ -3,7 +3,6 @@ package main
 
 import (
 	"bufio"
-//	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
@@ -11,12 +10,12 @@ import (
 	"os"
 
 	"github.com/ChimeraCoder/anaconda"
-	"golang.org/x/text/unicode/norm"
-	"github.com/mmaker/otot/encodings/arab"
 	"github.com/mmaker/otot/twio"
 	"github.com/mmaker/otot/twutils"
 	"github.com/mmaker/otot/proto/dh"
 	"github.com/mmaker/otot/proto/ot"
+	"github.com/mmaker/otot/encodings/arab"
+
 )
 
 
@@ -27,6 +26,7 @@ var (
 	partner = flag.String("with", "", "Partner")
 	proto_dh = flag.Bool("dh", false, "Perform a DH key exchange.")
 	proto_ot = flag.Bool("ot", false, "Perform Oblivious Transfer")
+	enc = flag.String("enc", "none", "Select Encoding")
 
 )
 
@@ -52,14 +52,9 @@ func check(e error) {
 func startDH(api *anaconda.TwitterApi, isInitiating bool, partner string) {
 	var r io.Reader = twio.NewTwitterReader(api)
 	r = arab.NewDecoder(r)
-	r = norm.NFC.Reader(r)
-
-	//r = base64.NewDecoder(base64.StdEncoding, r)
 
 	var w io.Writer = twio.NewTwitterWriter(api, partner)
- 	w = arab.NewEncoder(w)
-	w = norm.NFC.Writer(w)
-	//w = base64.NewEncoder(base64.StdEncoding, w)
+	w = arab.NewEncoder(w)
 
 	var key *big.Int
 	if isInitiating {
@@ -79,9 +74,9 @@ func startOT(api *anaconda.TwitterApi, isSender bool, partner string) {
 	w = arab.NewEncoder(w)
 
 	if isSender {
-		r := bufio.NewReader(os.Stdin)
-		fst, _ := r.ReadString('\n')
-		snd, _ := r.ReadString('\n')
+		stdin := bufio.NewReader(os.Stdin)
+		fst, _ := stdin.ReadString('\n')
+		snd, _ := stdin.ReadString('\n')
 		choices := []string{fst, snd}
 		ot.StartSender(r, w, choices)
 	} else {
