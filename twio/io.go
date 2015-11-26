@@ -24,6 +24,7 @@ type reader struct {
 	sinceId string
 	buf []byte
 	attempts int
+	u string
 }
 
 type writer struct {
@@ -77,11 +78,16 @@ func (r *reader) Read(p []byte) (n int, err error) {
 	var msg []byte
 	for i := len(mentions) - 1; i >= 0; i-- {
 		text := mentions[i].Text
+		user := mentions[i].User.ScreenName
 		log.Println(text)
 
 		if !strings.HasPrefix(text, r.prefix) {
 			continue
 		}
+		if strings.Compare(user, r.u) != 0 {
+			continue
+		}
+
 
 		msg = []byte(text[len(r.prefix):])
 		written = copy(p, msg)
@@ -124,7 +130,7 @@ func (w *writer) Write(p []byte) (i int, err error) {
 }
 
 
-func NewTwitterReader(api *anaconda.TwitterApi) io.Reader {
+func NewTwitterReader(api *anaconda.TwitterApi, username string) io.Reader {
 	v := url.Values{}
 	self, err := api.GetSelf(v)
 	if err != nil {
@@ -136,6 +142,7 @@ func NewTwitterReader(api *anaconda.TwitterApi) io.Reader {
 		prefix: fmt.Sprintf(PREFIX, self.ScreenName),
 		sleep: 15,
 		buf: []byte(""),
+		u: username,
 	}
 	r.SeekEnd()
 	return &r

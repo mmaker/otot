@@ -75,7 +75,7 @@ func main() {
 	}
 	api, _ := twio.GetApi(*credentials)
 
-	var r io.Reader = twio.NewTwitterReader(api)
+	var r io.Reader = twio.NewTwitterReader(api, *partner)
 //	r = arab.NewDecoder(r)
 	var w io.Writer = twio.NewTwitterWriter(api, *partner)
 //	w = arab.NewEncoder(w)
