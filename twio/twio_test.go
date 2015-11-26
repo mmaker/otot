@@ -6,6 +6,7 @@ import (
 	"testing"
 	"flag"
 	"os"
+	"path"
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func TestWriterAndReader(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	sender, _ = twutils.GetApi("/home/maker/dev/go/src/github.com/mmaker/otot/sender")
-	receiver, _ = twutils.GetApi("/home/maker/dev/go/src/github.com/mmaker/otot/receiver")
+	sender, _ = twutils.GetApi(path.Join("..", "sender"))
+	receiver, _ = twutils.GetApi(path.Join("..", "receiver"))
 	os.Exit(m.Run())
 }
