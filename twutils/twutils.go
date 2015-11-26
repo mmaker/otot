@@ -8,8 +8,15 @@ import (
 )
 
 func init() {
-	anaconda.SetConsumerKey("7kkQhns9JS0dY3cVpHHV5YqGv")
-	anaconda.SetConsumerSecret("GWAJvLLmBaFSPWbgF6rohWKt93pgoytfNGSkuSMx1jVaZIw0e6")
+	twitterKey := os.Getenv("TWITTER_KEY")
+	twitterSecret := os.Getenv("TWITTER_SECRET")
+	if len(twitterKey) == 0 || len(twitterSecret) == 0 {
+		panic(
+			"Cannot get TWITTER_KEY and TWITTER_SECRET env variables. " +
+			"Did you forget to set them?")
+	}
+	anaconda.SetConsumerKey(twitterKey)
+	anaconda.SetConsumerSecret(twitterSecret)
 }
 
 
