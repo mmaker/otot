@@ -11,7 +11,6 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/mmaker/otot/twio"
-	"github.com/mmaker/otot/twutils"
 	"github.com/mmaker/otot/proto/dh"
 	"github.com/mmaker/otot/proto/ot"
 	"github.com/mmaker/otot/encodings/arab"
@@ -95,7 +94,7 @@ func main() {
 		GetTokens()
 		os.Exit(0)
 	}
-	api, _ := twutils.GetApi(*credentials)
+	api, _ := twio.GetApi(*credentials)
 
 	if *proto_dh {
 		startDH(api, *start, *partner)

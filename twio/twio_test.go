@@ -10,8 +10,6 @@ import (
 
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/mmaker/otot/twutils"
 )
 
 var sender, receiver *anaconda.TwitterApi
@@ -48,7 +46,7 @@ func TestWriterAndReader(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	sender, _ = twutils.GetApi(path.Join("..", "sender"))
-	receiver, _ = twutils.GetApi(path.Join("..", "receiver"))
+	sender, _ = GetApi(path.Join("..", "sender"))
+	receiver, _ = GetApi(path.Join("..", "receiver"))
 	os.Exit(m.Run())
 }
