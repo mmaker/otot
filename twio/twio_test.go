@@ -2,13 +2,14 @@ package twio
 
 import (
 	"crypto/rand"
-	"bytes"
 	"net/url"
 	"testing"
 	"flag"
 	"os"
 
 	"github.com/ChimeraCoder/anaconda"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/mmaker/otot/twutils"
 )
 
@@ -17,14 +18,11 @@ var sender, receiver *anaconda.TwitterApi
 func TestWhoAmI(t *testing.T) {
 	v := url.Values{}
 	su, err := sender.GetSelf(v)
-	if err != nil || su.ScreenName != "otsender" {
-		t.Errorf("error: %s (username '%s')", err, su.ScreenName)
-	}
-
+	assert.Nil(t, err)
+	assert.Equal(t, su.ScreenName, "otsender")
 	ru, err := receiver.GetSelf(v)
-	if ru.ScreenName != "otreceiver" {
-		t.Errorf("error: %s(username '%s')", err, ru.ScreenName)
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, ru.ScreenName, "otreceiver")
 }
 
 
@@ -32,24 +30,18 @@ func TestWriterAndReader(t *testing.T) {
 	w := NewTwitterWriter(sender, "otreceiver")
 	r := NewTwitterReader(receiver)
 
-	z, _ := rand.Prime(rand.Reader, 1024)
-	msg := []byte(z.String())
-	n, err := w.Write(msg)
-	if n != len(msg) || err != nil {
-		t.Errorf("Error writing: %s (wrote %s)", err, n)
-	}
+	z, _ := rand.Prime(rand.Reader, 10)
+	msg := []byte("Hello! This is a random prime: " + z.String())
+	_, err := w.Write(msg)
+	assert.Nil(t, err)
+	// assert.Len(t, msg, n)
 
 	got := make([]byte, len(msg))
-	n, err = r.Read(got)
-	if n != len(msg)  || err != nil {
-		t.Errorf("Error reading: %s (read %d)", err, n)
-	}
-
-	if bytes.Compare(msg, got) != 0 {
-		t.Errorf("'%s' != '%s'", msg, got)
-	}
-
-
+	_, err = r.Read(got)
+	assert.Nil(t, err)
+	assert.NotNil(t, got)
+	// assert.Len(t, msg, n)
+	assert.Equal(t, msg, got)
 }
 
 

@@ -3,6 +3,8 @@ package emojii
 import (
 	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEncoder(t *testing.T) {
@@ -14,13 +16,8 @@ func TestEncoder(t *testing.T) {
 
 	data := make([]byte, 1000)
 	n, err := d.Read(data)
-	if n != len(m) || err != nil {
-	 	t.Fail()
-	}
-	if bytes.Compare(data[:n], m) != 0{
-	 	t.Fail()
-	}
-
+	assert.Nil(t, err)
+	assert.Equal(t, data[:n], m)
 }
 
 func TestByteRange(t *testing.T) {
@@ -34,9 +31,8 @@ func TestByteRange(t *testing.T) {
 	}
 	data := make([]byte, 1000)
 	n, err := d.Read(data)
-	if n != 255 || err != nil {
-		t.Errorf("Read %d bytes (%s)", n, err)
-	}
+	assert.Nil(t, err)
+	assert.Equal(t, n, 255)
 	for i, c := range data[:255] {
 		if int(i) != int(c) {
 			t.Errorf("'%x' != '%x'", int(c), int(i))
