@@ -1,19 +1,22 @@
 package dh
 
 import (
-	"io"
 	"math/big"
 	"net"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/mmaker/otot/encodings"
 )
 
 
 
 func TestDH(t *testing.T) {
-	var fst io.Reader
-	var snd io.Writer
-	fst, snd = net.Pipe()
+	in, out := net.Pipe()
+	c1 := encodings.NewTConn(in, out)
+	c2 := encodings.NewTConn(in, out)
 //	fst = emojii.NewDecoder(fst)
 //	snd = emojii.NewEncoder(snd)
 
@@ -22,17 +25,15 @@ func TestDH(t *testing.T) {
 
 	var sK, cK *big.Int
 	go func() {
-		sK = StartServer(fst, snd)
+		sK = StartServer(c1)
 		wg.Done()
 	}()
 
 	go func() {
-		cK = StartClient(fst, snd)
+		cK = StartClient(c2)
 		wg.Done()
 	}()
 
 	wg.Wait()
-	if sK.Cmp(cK) != 0 {
-		t.Errorf("%s != %s", sK, cK)
-	}
+	assert.Equal(t, cK, sK)
 }

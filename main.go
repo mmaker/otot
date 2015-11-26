@@ -13,8 +13,7 @@ import (
 	"github.com/mmaker/otot/twio"
 	"github.com/mmaker/otot/proto/dh"
 	"github.com/mmaker/otot/proto/ot"
-	"github.com/mmaker/otot/encodings/arab"
-
+	"github.com/mmaker/otot/encodings"
 )
 
 
@@ -26,7 +25,6 @@ var (
 	proto_dh = flag.Bool("dh", false, "Perform a DH key exchange.")
 	proto_ot = flag.Bool("ot", false, "Perform Oblivious Transfer")
 	enc = flag.String("enc", "none", "Select Encoding")
-
 )
 
 func GetTokens() {
@@ -41,48 +39,29 @@ func GetTokens() {
 	fmt.Println(credentials.Secret)
 }
 
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func startDH(api *anaconda.TwitterApi, isInitiating bool, partner string) {
-	var r io.Reader = twio.NewTwitterReader(api)
-	r = arab.NewDecoder(r)
-
-	var w io.Writer = twio.NewTwitterWriter(api, partner)
-	w = arab.NewEncoder(w)
-
+func startDH(c *encodings.TConn, isInitiating bool) {
 	var key *big.Int
 	if isInitiating {
-		key = dh.StartServer(r, w)
+		key = dh.StartServer(c)
 	} else {
-		key = dh.StartClient(r, w)
+		key = dh.StartClient(c)
 	}
 	fmt.Println("Receieved ", key)
 
 }
 
-func startOT(api *anaconda.TwitterApi, isSender bool, partner string) {
-	var r io.Reader = twio.NewTwitterReader(api)
-	r = arab.NewDecoder(r)
-
-	var w io.Writer = twio.NewTwitterWriter(api, partner)
-	w = arab.NewEncoder(w)
-
+func startOT(c *encodings.TConn, isSender bool) {
 	if isSender {
 		stdin := bufio.NewReader(os.Stdin)
 		fst, _ := stdin.ReadString('\n')
 		snd, _ := stdin.ReadString('\n')
 		choices := []string{fst, snd}
-		ot.StartSender(r, w, choices)
+		ot.StartSender(c, choices)
 	} else {
 		var choice int
 		var msg string
 		fmt.Scanf("%d", choice)
-		msg = ot.StartReceiver(r, w, choice)
+		msg = ot.StartReceiver(c, choice)
 		fmt.Println("Got: ", msg)
 	}
 }
@@ -96,9 +75,15 @@ func main() {
 	}
 	api, _ := twio.GetApi(*credentials)
 
+	var r io.Reader = twio.NewTwitterReader(api)
+//	r = arab.NewDecoder(r)
+	var w io.Writer = twio.NewTwitterWriter(api, *partner)
+//	w = arab.NewEncoder(w)
+	c := encodings.NewTConn(r, w)
+
 	if *proto_dh {
-		startDH(api, *start, *partner)
+		startDH(c, *start)
 	} else if *proto_ot {
-		startOT(api, *start, *partner)
+		startOT(c, *start)
 	}
 }

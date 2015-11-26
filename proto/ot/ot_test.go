@@ -2,13 +2,18 @@ package ot
 
 import (
 	"net"
-	"strings"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/mmaker/otot/encodings"
 )
 
 func TestOT(t *testing.T) {
-	fstc, sndc := net.Pipe()
+	in, out := net.Pipe()
+	c1 := encodings.NewTConn(in, out)
+	c2 := encodings.NewTConn(in, out)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -16,17 +21,14 @@ func TestOT(t *testing.T) {
 	choices := []string{"first", "second"}
 	var got string
 	go func() {
-		StartSender(fstc, sndc, choices)
+		StartSender(c1, choices)
 		wg.Done()
 	}()
 	go func () {
-		got = StartReceiver(fstc, sndc, 1)
+		got = StartReceiver(c2, 1)
 		wg.Done()
 	}()
 
 	wg.Wait()
-	if strings.Compare(got, "second") != 0 {
-		t.Errorf("Error: got '%s')", got)
-	}
-
+	assert.Equal(t, got, "second")
 }

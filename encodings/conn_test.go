@@ -1,30 +1,27 @@
-package proto
+package encodings
 
 import (
-	"bufio"
 	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/mmaker/otot/encodings"
 )
 
 
 func TestSendRecv(t *testing.T) {
 	buf := new(bytes.Buffer)
-	w := bufio.NewWriter(buf)
-	s := encodings.NetstringScanner(buf)
+	c := NewTConn(buf, buf)
 
 	fst := []byte("hello")
 	snd := []byte("world")
 	thr := []byte("!")
-	SendBytes(w, fst, snd)
-	SendBytes(w, thr)
+	c.SendBytes(fst, snd)
+	c.SendBytes(thr)
 
-	fstgot := RecvBytes(s)
+	fstgot := c.RecvBytes()
 	assert.Equal(t, fstgot, fst)
-	sndgot := RecvBytes(s)
+	sndgot := c.RecvBytes()
 	assert.Equal(t, sndgot, snd)
-	thrgot := RecvBytes(s)
+	thrgot := c.RecvBytes()
 	assert.Equal(t, thrgot, thr)
 }

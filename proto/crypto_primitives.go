@@ -7,8 +7,16 @@ import (
 	"crypto/sha256"
 	"errors"
 	"io"
+	"log"
 )
 
+const BITS = 512
+
+func check(err error) {
+	if err != nil {
+		log.Fatalf("%s", err)
+	}
+}
 
 func Hash(data []byte) []byte {
 	h := sha256.New()
@@ -21,12 +29,12 @@ func Encrypt(key, data []byte) []byte {
 		key = Hash(key)[:32]
 	}
 	block, err := aes.NewCipher(key)
-	Check(err)
+	check(err)
 
 	ciphertext := make([]byte, aes.BlockSize + len(data))
 	iv := ciphertext[:aes.BlockSize]
 	_, err = io.ReadFull(rand.Reader, iv)
-	Check(err)
+	check(err)
 
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	cfb.XORKeyStream(ciphertext[aes.BlockSize:], data)
@@ -38,9 +46,9 @@ func Decrypt(key, data []byte) []byte {
 		key = Hash(key)[:32]
 	}
 	block, err := aes.NewCipher(key)
-	Check(err)
+	check(err)
 	if len(data) < aes.BlockSize {
-		Check(errors.New("ciphertext too short"))
+		check(errors.New("ciphertext too short"))
 	}
 	iv := data[:aes.BlockSize]
 	data = data[aes.BlockSize:]
