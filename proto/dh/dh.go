@@ -2,7 +2,7 @@ package dh
 
 import (
 	"crypto/rand"
-	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/mmaker/otot/encodings"
@@ -22,7 +22,7 @@ func StartClient(c *encodings.TConn) *big.Int {
 }
 
 func StartServer(c *encodings.TConn) *big.Int {
-	fmt.Println("Listening.")
+	log.Println("Listening.")
 	mod := c.RecvBigInt()
 	g := c.RecvBigInt()
 	A := c.RecvBigInt()

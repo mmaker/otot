@@ -64,6 +64,13 @@ func (t *TConn) SendBigInt(ns...*big.Int) {
 	t.SendBytes(ss...)
 }
 
+
+// XXX. this function should be used by check, scanCheck, and other methods that
+// might abort.
+func (t *TConn) Abort(err error) {
+	log.Fatalf("%s\n", err)
+}
+
 func NewTConn(in io.Reader, out io.Writer) *TConn {
 	return &TConn{
 		s: NetstringScanner(in),
